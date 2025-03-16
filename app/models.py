@@ -1,16 +1,19 @@
 from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncAttrs
 from sqlalchemy.orm import DeclarativeBase, relationship
 from sqlalchemy.orm import Mapped, mapped_column
-from sqlalchemy import Integer, String, DateTime, func
+from sqlalchemy import Integer, String, DateTime, UUID, func
+from sqlalchemy.dialects.postgresql import ENUM
 from sqlalchemy.schema import ForeignKey
-import datetime
+import datetime, uuid
 
-from app.config import PG_DSN
+from config import PG_DSN
+from custom_types import Role
 
 
 engine = create_async_engine(PG_DSN)
 
 Session = async_sessionmaker(bind=engine, expire_on_commit=False)
+
 
 class Base(DeclarativeBase, AsyncAttrs):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, index=True)
@@ -23,15 +26,31 @@ class Base(DeclarativeBase, AsyncAttrs):
 
 class User(Base):
     __tablename__ = "users"
-    name: Mapped[str] = mapped_column(String, nullable=False)
+    username: Mapped[str] = mapped_column(String, unique=True, nullable=False)
+    name: Mapped[str] = mapped_column(String, nullable=True)
     password: Mapped[str] = mapped_column(String, nullable=False)
     advertisements = relationship("Advertisement", back_populates="owner")
+    tokens: Mapped[list["Token"]] = relationship("Token", back_populates="user")
+    role: Mapped[Role] = mapped_column(ENUM(Role), nullable=False, default=Role.USER)
 
     @property
     def dict(self):
         return {"id": self.id,
+                "user_name": self.username,
                 "name": self.name,
                 "created_at": self.created_at.isoformat()}
+
+
+class Token(Base):
+    __tablename__ = "tokens"
+    token: Mapped[uuid] = mapped_column(UUID, nullable=False, server_default=func.gen_random_uuid())
+    user_id: Mapped[int] = mapped_column(Integer, ForeignKey("users.id"), nullable=False)
+    user: Mapped[User] = relationship("User", back_populates="tokens")
+
+    @property
+    def dict(self):
+        return {"token": self.token}
+
 
 class Advertisement(Base):
     __tablename__ = "advertisements"
@@ -50,8 +69,9 @@ class Advertisement(Base):
                 "owner_id": self.owner_id,
                 "created_at": self.created_at.isoformat()}
 
-ORM_OBJ = User, Advertisement
-ORM_CLS = type[User, Advertisement]
+
+ORM_OBJ = User | Advertisement | Token
+ORM_CLS = type[User], type[Advertisement], type[Token]
 
 
 async def init_orm():

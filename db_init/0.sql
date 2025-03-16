@@ -1,0 +1,2 @@
+CREATE EXTENSION pg_trgm;
+CREATE EXTENSION btree_gin;

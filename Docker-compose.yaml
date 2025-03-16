@@ -2,17 +2,56 @@ services:
   db:
     image: postgres:16.6-alpine3.21
     ports:
-      - "5432:5432"
+      - "5431:5432"
     environment:
         POSTGRES_USER: ${DB_USER}
         POSTGRES_PASSWORD: ${DB_PASSWORD}
         POSTGRES_DB: ${DB_NAME}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+    volumes:
+      - ./db_init/0.sql:/docker-entrypoint-initdb.d/0.sql
 
   app:
     build: .
     ports:
-      - "8000:8000"
+      - "8080:8080"
     depends_on:
-        - db
+        db:
+            condition: service_healthy
     env_file:
       - .env
+    volumes:
+      - ./app:/app
+
+  tests:
+    build:
+      context: .
+      dockerfile: Dockerfile.tests
+    depends_on:
+      - db
+      - app
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_HOST: ${DB_HOST}
+      POSTGRES_PORT: ${DB_PORT}
+      API_URL: ${API_URL}
+    volumes:
+      - ./app:/app
+      - ./tests:/app
+
+  migrate:
+    build: .
+    depends_on:
+      - db
+    environment:
+        DB_USER: ${DB_USER}
+        DB_PASSWORD: ${DB_PASSWORD}
+        DB_NAME: ${DB_NAME}
+        DB_HOST: ${DB_HOST}
+        DB_PORT: ${DB_PORT}
+    entrypoint: alembic upgrade head
+    volumes:
+      - ./app:/app

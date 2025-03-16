@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.exc import IntegrityError
 from fastapi import HTTPException
 
-from app.models import ORM_CLS, ORM_OBJ
+from models import ORM_CLS, ORM_OBJ
 
 
 async def add_item(session: AsyncSession, item: ORM_OBJ):

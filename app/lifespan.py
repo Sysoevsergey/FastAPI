@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from contextlib import asynccontextmanager
-from app.models import init_orm, close_orm
+from models import init_orm, close_orm
 
 
 @asynccontextmanager

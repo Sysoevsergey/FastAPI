@@ -1,4 +1,5 @@
 from pydantic import BaseModel, field_validator
+import uuid
 
 
 class UserValidation:
@@ -8,28 +9,32 @@ class UserValidation:
             raise ValueError("Пароль должен быть не менее 8 символов")
         return value
 
-    @field_validator("name", check_fields=False, mode="before")
+    @field_validator("user_name", check_fields=False, mode="before")
     def name_length(cls, value):
         if not value:
-            raise ValueError("Имя не может быть пустым")
+            raise ValueError("Имя пользователя не может быть пустым")
         return value
 
 class User(BaseModel, UserValidation):
     pass
 
 class CreateUser(User):
-    name: str
+    username: str
+    name: str | None = None
     password: str
 
 class CreateUserResponse(User):
     id: int
-    name: str
-    created_at: str
 
 class UpdateUser(User):
     name: str | None = None
     password: str | None = None
 
+class InfoUserResponse(User):
+    id: int
+    user_name: str
+    name: str
+    created_at: str
 
 
 class AdvertisementValidation:
@@ -59,7 +64,6 @@ class CreateAdvertisement(Advertisement):
     title: str
     description: str
     price: int
-    owner_id: int
 
 class CreateAdvertisementResponse(Advertisement):
     id: int
@@ -73,3 +77,11 @@ class UpdateAdvertisement(Advertisement):
     title: str | None = None
     description: str | None = None
     price: int | None = None
+
+
+class Login(BaseModel):
+    username: str
+    password: str
+
+class LoginResponse(BaseModel):
+    token: uuid.UUID
