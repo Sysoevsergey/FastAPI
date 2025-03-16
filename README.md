@@ -1,5 +1,23 @@
-### Запуск:
-- #### docker-compose --env-file .env up
+run database
+```bash
+docker-compose --env-file .env up db
+```
+
+run migrations
+```bash
+docker-compose --env-file .env up migrate
+```
+
+run api
+```bash
+docker-compose --env-file .env up app
+```
+
+run tests
+```bash
+docker-compose --env-file .env up tests
+```
+
 # Домашнее задание к лекции «Создание REST API на FastApi» часть 1
 
 Инструкцию по сдаче домашнего задания Вы найдете на главной странице репозитория.
