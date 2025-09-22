@@ -27,7 +27,7 @@ docker-compose --env-file .env up db
 docker-compose --env-file .env up migrate
 ```
 
-run api
+- run api
 ```bash
 docker-compose --env-file .env up app
 ```
